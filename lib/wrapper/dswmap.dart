@@ -1,6 +1,6 @@
 part of ds.wrapper;
 
-class DSWMapStorage<T,K> extends DSWAbstract<Map,T,K>{
+class dsWMapStorage<T,K> extends dsWAbstract<Map,T,K>{
 	
 	
 	MapStorage(){
