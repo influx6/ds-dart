@@ -1,7 +1,7 @@
 part of ds.wrapper;
 
 
-class DSWListStorage<K> extends DSWAbstract<List,num,K>{
+class dsWListStorage<K> extends dsWAbstract<List,num,K>{
 	
 	ListStorage(num maxSize){
 		this.store = new List<K>(maxSize);
