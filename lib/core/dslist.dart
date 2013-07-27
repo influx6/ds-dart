@@ -1,7 +1,7 @@
 part of ds.core;
 
 
-class dsListIterator extends dsIterable{
+class dsListIterator extends dsIterator{
 	
 	static create(l){ return new dsListIterator(l); }
 	dsListIterator(dsList l): super(l);
