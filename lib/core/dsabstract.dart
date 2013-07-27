@@ -126,7 +126,7 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 		if(_state == _done){ reset(); this.reset(); }
 		if(_state == _uninit){
 			if(!init()) return false;
-			_state = 1;
+			_state = _movin;
 		}
 		else if(_state == _movin){
 			if(!change()){
@@ -138,20 +138,21 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 		return true;
 	}
 	
-	bool moveNext(){
+	bool moveNext([Function n]){
 		return this.move((){
 			if(this.ds.root == null) return false;
 			this.node = this.ds.root;
 			return true;
 		},(){
-			if( this.node == null || this.node == this.ds.root || this.node.right == null) return false;
-			this.node = this.node.right;		
+			this.node = this.node.right;				
+			if(this.node == this.ds.root || this.node == null || this.node.right == null) return false;
 			return true;
 		},(){
-			this.ds.root.unmarkCascade();
+			if(n != null) n();
 			return true;
 		});
 	}
+	
 	
 	void reset(){
 		this.node = null;
