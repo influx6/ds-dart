@@ -1,9 +1,9 @@
 part of ds.core;
 
 
-class dsNode extends dsAbstractNode{
-	dsNode left;
-	dsNode right;
+class dsNode<T> extends dsAbstractNode<T>{
+	dsNode<T> left;
+	dsNode<T> right;
 	
 	static create(dynamic data,{left: null,right:null}){
 		return new dsNode(data,l:left,r:right);

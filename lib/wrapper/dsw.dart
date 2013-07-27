@@ -1,5 +1,6 @@
 library ds.wrapper;
 
+part '../helpers.dart';
 part 'dswabstract.dart';
 part 'dswmap.dart';
 part 'dswlist.dart';

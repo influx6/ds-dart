@@ -1,34 +1,5 @@
 part of ds.core;
 
-class dsCounter{
-	num _count = 0;
-	dynamic handler;
-	
-	dsCounter(this.handler);
-	
-	num get counter => _count;
-	
-	void tick(){
-		_count += 1;
-	}
-	
-	void untick(){
-		_count -= 1;
-	}
-	
-	void detonate(){
-		_counter = 0;
-	}
-	
-	String toString(){
-		return this.counter.toString();
-	}
-}
-	
-class dsComparable{
-	bool compare(dynamic d);
-}
-
 class dsImpl {
 	
 	void addAll();
@@ -45,23 +16,18 @@ class dsImpl {
 
 class dsIteratorHelpers{
 	void reset();
-	void onUinit();
-	void onMove();
-	void onChange();
 }
 	
 class dsIteratorImpl{
-	
 	void moveNext();
 	dynamic get current;	
-	
 }
 
 class DS implements dsImpl{
 	bool marked = false;
-	dsCounter bomb;
+	Counter bomb;
 	
-	DS(){ bomb = new dsCounter(this); }
+	DS(){ bomb = new Counter(this); }
 	
 	void mark(){ this.marked = true; }
 	void unmark(){ this.marked = false; }
@@ -71,8 +37,8 @@ class DS implements dsImpl{
 	bool get isDs => true;
 }
 
-abstract class dsAbstractNode implements dsComparable{
-	dynamic data;
+abstract class dsAbstractNode<T> implements Comparable{
+	T data;
 	bool marked = false;
 	
 	void mark(){ this.marked = true; }
@@ -84,13 +50,43 @@ abstract class dsAbstractNode implements dsComparable{
 	}
 }
 
-abstract class dsAbstractList<T> extends DS implements dsComparable{
-	dsNode head;
-	dsNode tail;
+abstract class dsTreeNode<T> extends dsAbstractNode<T>{
+	dsTreeNode<T> left;
+	dsTreeNode<T> right;
+	dsTreeNode<T> root;
+}
+
+abstract class dsGSearcher{
+
+}
+	
+abstract class dsGArc<N,T>{
+	N node;
+	T weight;
+	
+	dsGArc(this.node,this.weight);
+}
+
+abstract class dsGNode<T>{
+	dsAbstractList<dsGArc> arcs;
+	T data;
+	
+	dsGNode(this.data);
+	
+	void addArc(dsGNode<T> a,dynamic n);
+	dsGNode find(dsGNode<T> n);
+	bool arcExists(dsGNode<T> n);
+	dsGArc arcFinder(dsGNode n,Function callback);
+	
+}
+		
+abstract class dsAbstractList<T> extends DS implements Comparable{
+	dsAbstractNode<T> head;
+	dsAbstractNode<T> tail;
 	
 	num get size => bomb.counter; 
 	bool get isEmpty => (head == null && tail == null);
-	T get iterator;	
+	dsAbstractIterator get iterator;	
 	
 }
 
@@ -99,11 +95,11 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 	static const int _movin = 1;
 	static const int _done = 2;
 	int _state = 0;
-	dsCounter steps;
+	Counter counter;
 	dsAbstractNode node;
 	DS ds;
 		
-	dsAbstractIterator(this.ds){ steps = new dsCounter(this); }
+	dsAbstractIterator(this.ds){ counter = new Counter(this); }
 	dsAbstractIterator createIterator(n);
 	
 	num get size{
@@ -126,30 +122,41 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 		return this.node.data;
 	}
 	
-	bool moveNext(){
-		if(_state == _done){ this.reset(); }
+	bool move(Function init,Function change,Function reset){
+		if(_state == _done){ reset(); this.reset(); }
 		if(_state == _uninit){
+			if(!init()) return false;
 			_state = 1;
-			this.onUinit();
 		}
 		else if(_state == _movin){
-			this.onMove();
-			if(this.node == this.ds.root || this.node == null ){ 
+			if(!change()){
 				_state = _done; 
 				return false;
-			}
+			};
 		}
 		
-		this.steps.tick();
 		return true;
+	}
+	
+	bool moveNext(){
+		return this.move((){
+			if(this.ds.root == null) return false;
+			this.node = this.ds.root;
+			return true;
+		},(){
+			if( this.node == null || this.node == this.ds.root || this.node.right == null) return false;
+			this.node = this.node.right;		
+			return true;
+		},(){
+			this.ds.root.unmarkCascade();
+			return true;
+		});
 	}
 	
 	void reset(){
 		this.node = null;
 		_state = _uninit;
-		this.steps.detonate();
-		this.onReset();
+		this.counter.detonate();
 	}
-	
 	
 }
