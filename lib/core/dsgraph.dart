@@ -7,6 +7,10 @@ class dsDeptFirst extends dsGSearcher{
 class dsBreadthFirst extends dsGSearcher{
 
 }
+
+class dsGraph extends DS{
+
+}
 	
 class dsGraphArc<T> extends dsGArc<dsGraphNode,T>{
 	
@@ -14,11 +18,11 @@ class dsGraphArc<T> extends dsGArc<dsGraphNode,T>{
 		return new dsGraphArc(n,w);
 	}
 	
-	dsGraphArc(n,w) : super(n,w);
+	dsGraphArc(node,weight) : super(node,weight);
 
 }
 
-class dsGraphNode<T,M> extends dsGNode<T>{
+class dsGraphNode<T,M> extends dsGNode<T,M>{
 	var _dit;
 	
 	static create(n){
@@ -26,42 +30,48 @@ class dsGraphNode<T,M> extends dsGNode<T>{
 	}
 	
 	dsGraphNode(data): super(data){
-		arcs = new dsList<dsGraphArc<M>>();
-		_dit = arcs.iterator;
+		this.arcs = new dsList<dsGraphArc<M>>();
+		this._dit = this.arcs.iterator;
 	}
 	
 	void addArc(dsGraphNode a,dynamic n){
 		this.arcs.append(new dsGraphArc(a,n));
 	}
 	
-	dsGraphArc findArc(dsGraphNode<T> n){
+	dsGraphArc findArc(dsGraphNode n){
 		return this.arcFinder(n,(m){
 			return m;
 		})
 	}
 	
-	dsGraphArc removeArch(dsGraphNode<T> n){
-		return this._dit.remove(n);
+	dsGraphArc removeArch(dsGraphNode n){
+		return this.arcFinder(n,(m){
+			this._dit.remove(m).free();
+			return m;
+		});
+		
 	}
 	
-	dsGraphArc removeAllArch(dsGraphNode<T> n){
-		return this._dit.remove(n,all:true);
+	dsGraphArc removeAllArch(dsGraphNode n){
+		return this.arcFinder(n,(m){
+			return this._dit.remove(m,all:true);
+		});
 	}
 	
 	bool removeAllArchs(){
 		return this.arcs.removeAll();
 	}
 		
-	bool arcExists(dsGNode<T> n){
+	bool arcExists(dsGraphNode n){
 		return this.arcFinder(n,(m){
 			return true;
 		});
 	}
 	
-	dsGraphArc arcFinder(dsGNode<T> n,Function callback){
+	dsGraphArc arcFinder(dsGraphNode n,Function callback){
 		while(this._dit.moveNext()){
-			if(itr.current.node != n) continue;
-			return callback(itr.current);
+			if(!this._dit.current.node.compare(n)) continue;
+			return callback(this._dit.current);
 			break;
 		}
 	} 
