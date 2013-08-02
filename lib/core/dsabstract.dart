@@ -55,28 +55,59 @@ abstract class dsTreeNode<T> extends dsAbstractNode<T>{
 	dsTreeNode<T> right;
 	dsTreeNode<T> root;
 }
-
-abstract class dsGSearcher{
-
-}
 	
-abstract class dsGArc<N,T>{
+abstract class dsGArc<N,T> implements Comparable{
 	N node;
 	T weight;
 	
 	dsGArc(this.node,this.weight);
+	
+	String toString(){
+		return "NodeData:${this.node.data} Weight:${this.weight}";
+	}
+	
+	bool compare(dsGArc a){
+		if(this.node.compare(a.node) && this.weight == a.weight) return true;
+		return a;
+	}
 }
 
-abstract class dsGNode<T>{
-	dsAbstractList<dsGArc> arcs;
+abstract class dsGNode<T,M> implements Comparable{
+	dsAbstractList<dsGArc<dsGNode,M>> arcs;
 	T data;
 	
 	dsGNode(this.data);
 	
-	void addArc(dsGNode<T> a,dynamic n);
-	dsGNode find(dsGNode<T> n);
-	bool arcExists(dsGNode<T> n);
+	void addArc(dsGNode a,dynamic n);
+	dsGNode find(dsGNode n);
+	bool arcExists(dsGNode n);
 	dsGArc arcFinder(dsGNode n,Function callback);
+	
+	String toString(){
+		return "data:${this.data}";
+	}
+	
+	bool compare(dsGNode a){
+		if(a.data == this.data) return true;
+		return false;
+	}
+	
+}
+
+abstract class dsGSearcher{
+
+}
+
+abstract class dsAbstractGraph<T,M> extends DS implements Comparable{
+	dsAbstractList<dsGNode<T,M>> nodes;
+	
+	static create(){
+		return new dsAbstractGraph<T,M>();
+	}
+	
+	dynamic get size{
+		return nodes.size;
+	}
 	
 }
 		
@@ -135,6 +166,7 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 			};
 		}
 		
+		this.counter.tick();
 		return true;
 	}
 	
@@ -153,7 +185,21 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 		});
 	}
 	
-	
+	bool movePrevious([n]){
+		return this.move((){
+			if(this.ds.root == null) return false;
+			this.node = this.ds.tail;
+			return true;
+		},(){
+			this.node = this.node.left;				
+			if(this.ds.tail == this.node || this.node == null || this.node.left == null) return false;
+			return true;
+		},(){
+			if(n != null) n();
+			return true;	
+		});
+	}
+		
 	void reset(){
 		this.node = null;
 		_state = _uninit;

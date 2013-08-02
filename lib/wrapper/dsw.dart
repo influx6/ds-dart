@@ -5,14 +5,14 @@ part 'dswabstract.dart';
 part 'dswmap.dart';
 part 'dswlist.dart';
 
-class dsWrapper<T,K>{
-	
+class dsStorage{
+		
 	static createMap(){
-		return new dsWMapStorage<T,K>();
+		return new dsMapStorage();
 	}
 	
 	static createList(){
-		return new dsWListStorage<T,K>();
+		return new dsListStorage();
 	}
 }
 
