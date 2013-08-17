@@ -14,6 +14,10 @@ class dsImpl {
 	
 }
 
+class dsSearcher{
+	void process(DS g);
+}
+
 class dsIteratorHelpers{
 	void reset();
 }
@@ -39,15 +43,26 @@ class DS implements dsImpl{
 
 abstract class dsAbstractNode<T> implements Comparable{
 	T data;
-	bool marked = false;
+	bool _mark = false;
 	
-	void mark(){ this.marked = true; }
-	void unmark(){ this.marked = false; }
+	void mark(){ this._mark = true; }
+	void unmark(){ this._mark = false; }
+	bool get marked => this._mark == true;
 	bool get isFree => (data == null);
 	
 	String toString(){
 		return this.data.toString();
 	}
+	
+	bool compare(dsAbstractNode<T> a){
+		return (a.data == this.data);
+	}
+	
+	// sets data to null
+	void free(){
+		this.data = null;
+	}
+	
 }
 
 abstract class dsTreeNode<T> extends dsAbstractNode<T>{
@@ -56,8 +71,21 @@ abstract class dsTreeNode<T> extends dsAbstractNode<T>{
 	dsTreeNode<T> root;
 }
 
-abstract class dsGSearcher{
+abstract class dsGSearcher implements dsSearcher{
+	dsAbstractNode root;
+	Function processor;
 	
+	dsGSearcher(Function processor(dsGNode b,[dsGArc a])){
+		this.processor = processor;
+	}
+	
+	void search(dsAbstractGraph g,[Function heuristic]);
+	void processArcs(dsGraphArc a,[Function heuristic]);
+	
+	bool isReady(dsAbstractGraph g){
+	 	if(g.nodes.isEmpty || g.root == null) return false;
+		return true;
+	}
 }
 	
 abstract class dsGArc<N,T> implements Comparable{
@@ -76,7 +104,7 @@ abstract class dsGArc<N,T> implements Comparable{
 	}
 }
 
-abstract class dsGNode<T,M> implements Comparable{
+abstract class dsGNode<T,M> extends dsAbstractNode<T> implements Comparable{
 	dsAbstractList<dsGArc<dsGNode,M>> arcs;
 	T data;
 	
@@ -108,7 +136,10 @@ abstract class dsAbstractGraph<T,M> extends DS implements Comparable{
 	dynamic get size{
 		return nodes.size;
 	}
-	
+		
+	dsAbstractNode get root{
+		return this.nodes.root;
+	}
 }
 		
 abstract class dsAbstractList<T> extends DS implements Comparable{
@@ -204,6 +235,11 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 		this.node = null;
 		_state = _uninit;
 		this.counter.detonate();
+	}
+	
+	void detonate(){
+		this.reset();
+		this.ds = null;
 	}
 	
 }

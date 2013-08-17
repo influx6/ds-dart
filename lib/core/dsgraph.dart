@@ -1,17 +1,124 @@
 part of ds.core;
 
-class dsDeptFirst extends dsGSearcher{
+class dsDepthFirst extends dsGSearcher{
+	
+	static create(d) => new dsDepthFirst(d);
+
+	dsDepthFirst(Function processor(dsGraphNode b,[dsGraphArc a])): super(processor);
+	
+	
+	void search(dsAbstractGraph g,[Function heuristic]){
+		if(!this.isReady(g)) return;
+				
+		this.processArcs(dsGraphArc.create(g.root.data,null),heuristic);
+		g.clearMarks();
+	}
+	
+	void processArcs(dsGraphArc a,[Function heuristic]){
+		if(a == null || a.node == null) return;
+		
+		var n = a.node;
+		this.processor(n,a);
+		n.mark();
+		var arc = n.arcs.iterator;
+		while(arc.moveNext()){
+			if(!arc.current.node.marked) 
+				this.processArcs(arc.current,heuristic);
+		}
+	}
 
 }
 
 class dsBreadthFirst extends dsGSearcher{
 
-}
-
-class dsGraph extends DS{
-
-}
+	static create(d) => new dsBreadthFirst(d);
 	
+	dsBreadthFirst(Function processor(dsGraphNode b,[dsGraphArc a])): super(processor);
+	
+	void search(dsAbstractGraph g,[Function heuristic]){
+		if(!this.isReady(g)) return;
+				
+		this.processArcs(dsGraphArc.create(g.root.data,null),heuristic);
+		g.clearMarks();
+		
+	}
+	
+	void processArcs(dsGraphArc a,[Function heuristic]){
+		if(a == null || a.node == null) return;
+		
+		var queue = new Queue();
+		queue.add(a);
+		queue.first.node.mark();
+		while(queue.isNotEmpty){
+			this.processor(queue.first.node,queue.first);
+			var arc = queue.first.node.arcs.iterator;
+			while(arc.moveNext()){
+				if(!arc.current.node.marked){
+					queue.add(arc.current);
+					arc.current.node.mark();
+				}
+			}
+			queue.removeFirst();
+		}
+	}
+
+
+}
+
+class dsGraph<T,M> extends dsAbstractGraph<T,M>{
+    
+	dynamic git;
+
+    static create() => new dsGraph<T,M>();
+
+    dsGraph(): super(){
+	  this.nodes = new dsList<dsGNode<T,M>>();
+      this.git = this.nodes.iterator;
+    }
+    
+    dsGraphNode add(dynamic data){
+      if(data is dsGraphNode) return this.nodes.append(data).data;
+      return this.nodes.append(dsGraphNode.create(data)).data;
+    }
+    
+    void bind(dsGraphNode from,dsGraphNode to,dynamic weight){
+      from.addArc(to,weight);
+      if(!this.git.has(from)) this.add(from);
+      if(!this.git.has(to)) this.add(to);
+    }
+  
+    void unbind(from,to){
+      from.removeArc(to);
+      if(!this.git.has(from)) this.add(from);
+      if(!this.git.has(to)) this.add(to);
+    }
+
+    
+    void eject(dsGraphNode to){
+      while(this.git.moveNext()){
+        this.git.current.removeArc(to);
+      }
+    }
+	
+	void clearMarks(){
+		while(this.git.moveNext()){
+			this.git.current.unmark();
+		}
+	}
+    
+    String toString(){
+      var map = new StringBuffer();
+      map.write("<GraphMap:\n");
+      while(this.git.moveNext()){
+        map.write('<Edge:<');
+        map.write(this.git.current.printArcs());
+		map.write('>>');
+      }
+	  map.write('>');
+      return map.toString();
+    }
+}
+
 class dsGraphArc<T> extends dsGArc<dsGraphNode,T>{
 	
 	static create(n,w){
@@ -20,22 +127,33 @@ class dsGraphArc<T> extends dsGArc<dsGraphNode,T>{
 	
 	dsGraphArc(node,weight) : super(node,weight);
 
+  String toString(){
+    return "Arc: Node data ${this.node.data}, Weight: ${this.weight}";
+  }
 }
 
 class dsGraphNode<T,M> extends dsGNode<T,M>{
 	var _dit;
+  	bool isUniq = true;
 	
-	static create(n){
-		return new dsGraphNode(n);
+	static create(n,{bool unique: true}){
+		return new dsGraphNode(n,unique: unique);
 	}
 	
-	dsGraphNode(data): super(data){
+	dsGraphNode(data,{bool unique: true}): super(data){
 		this.arcs = new dsList<dsGraphArc<M>>();
 		this._dit = this.arcs.iterator;
+    this.isUniq = unique;
 	}
 	
 	void addArc(dsGraphNode a,dynamic n){
-		this.arcs.append(new dsGraphArc(a,n));
+		if(!this.isUniq) { 
+      this.arcs.append(new dsGraphArc(a,n));
+      return;
+    }
+    this.probe(a,(m){
+      if(m == null) return this.arcs.append(new dsGraphArc(a,n));
+    });
 	}
 	
 	dsGraphArc findArc(dsGraphNode n){
@@ -44,9 +162,10 @@ class dsGraphNode<T,M> extends dsGNode<T,M>{
 		})
 	}
 	
-	dsGraphArc removeArch(dsGraphNode n){
+	dsGraphArc removeArc(dsGraphNode n){
 		return this.arcFinder(n,(m){
-			this._dit.remove(m).free();
+      this._dit.remove(m);
+      m.node.removeArc(this);
 			return m;
 		});
 		
@@ -62,19 +181,38 @@ class dsGraphNode<T,M> extends dsGNode<T,M>{
 		return this.arcs.removeAll();
 	}
 		
-	bool arcExists(dsGraphNode n){
+	bool arcExists(dsGraphNode n,[Function m]){
 		return this.arcFinder(n,(m){
 			return true;
 		});
 	}
 	
-	dsGraphArc arcFinder(dsGraphNode n,Function callback){
-		while(this._dit.moveNext()){
-			if(!this._dit.current.node.compare(n)) continue;
-			return callback(this._dit.current);
+   dsGraphArc arcFinder(dsGraphNode n,Function callback){
+    	this.probe(n,(m){
+      		if(m != null) return callback(m);
+    	});
+   }
+
+   dynamic probe(dsGraphNode n,Function callback){
+     var itr = this.arcs.iterator;
+		while(itr.moveNext()){
+			if(!itr.current.node.compare(n)) continue;
+			return callback(itr.current);
 			break;
 		}
-	} 
-	
+     return callback(null);
+   }
 
+
+   String printArcs(){
+     var buffer = new StringBuffer();
+     buffer.write('Node: ${this.data} with Arcs: ${this.arcs.size}');
+     buffer.write('\n');
+     while(this._dit.moveNext()){
+      buffer.write("<");
+      buffer.write(this._dit.current.toString());
+      buffer.write('>\n');
+     }
+     return buffer.toString();
+   }
 }

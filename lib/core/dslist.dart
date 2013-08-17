@@ -1,35 +1,5 @@
 part of ds.core;
 
-
-class dsListIterator extends dsIterator{
-	
-	static create(l){ return new dsListIterator(l); }
-	dsListIterator(dsList l): super(l);
-	
-	dsListIterator createIterator(dsList l){
-		return dsListIterator.create(l);
-	}
-	
-	dynamic remove(dynamic l,{all:false}){
-		var steps = dsListIterator.create(this.ds);
-		var res;
-		
-		while(steps.moveNext()){
-			if(steps.current != l) continue;
-			res = steps.currentNode;
-			var right = res.right;
-			var left = res.left;
-			left.right = right;
-			right.left = left;
-			
-			res.right = res.left = null;
-			if(all) res.free();
-			return res;
-			if(!all) break;
-		}
-	}
-}
-
 class dsList<T> extends dsAbstractList{
 	num _maxSize;
 	dsListIterator _it;
@@ -43,8 +13,12 @@ class dsList<T> extends dsAbstractList{
 		this._it = dsListIterator.create(this);
 	}
 	
-	void append(T d){
-		if(this.isEmpty){ this.head = this.tail = dsNode.create(d); return this.incCounter();}
+	dsNode append(T d){
+		if(this.isEmpty){ 
+      this.head = this.tail = dsNode.create(d); 
+      this.incCounter();
+      return this.tail;
+    }
 		var tail = this.tail;
 		var left = tail.left;
 		var right = tail.right;
@@ -56,11 +30,16 @@ class dsList<T> extends dsAbstractList{
 		tail.right = this.tail;		
 		this.head.left = this.tail;
 		
-		return this.incCounter();
+		this.incCounter();
+    return this.tail;
 	}
 	
-	void prepend(T d){
-		if(this.isEmpty){ this.head = this.tail = dsNode.create(d); return this.incCounter();}
+	dsNode prepend(T d){
+		if(this.isEmpty){ 
+      this.head = this.tail = dsNode.create(d); 
+      this.incCounter();
+      return this.head;
+    }
 		var head = this.head;
 		var left = head.left;
 		var right = head.right;
@@ -70,10 +49,12 @@ class dsList<T> extends dsAbstractList{
 		this.head.left = this.tail;
 		
 		head.left = this.head;
-		return this.incCounter();
+		this.incCounter();
+    return this.head;
 	}
 	
 	dynamic removeHead(){
+    if(this.isEmpty) return;
 		var head = this.root;
 		var left = head.left;
 		var right = head.right;
@@ -83,11 +64,12 @@ class dsList<T> extends dsAbstractList{
 		left.right = this.head;
 		
 		head.right = head.left = null;
-		
+		this.decCounter();
 		return head;
 	}
 	
 	dynamic removeTail(){
+    if(this.isEmpty) return;
 		var tail = this.tail;
 		var left = tail.left;
 		var right = tail.right;
@@ -98,27 +80,34 @@ class dsList<T> extends dsAbstractList{
 		
 		tail.right = tail.left = null;
 		
+		this.decCounter();
 		return tail;	
 	}
 	
-	bool remove(T d){
-		if(this._it.remove(T)){
-			this.decCounter();
-			return true;
-		};
-		return false;
+	dynamic remove(T d){
+    if(this.isEmpty) return;
+    var i = this._it.remove(T);
+	if(i != null) this.decCounter();
+    return i;
 	}
-		
+	
+	void removeAll(){
+    if(this.isEmpty) return;
+	  this.free();
+	  this.head = this.tail = null;
+	}
+
 	bool isDense(){
 		if(this.size < this._maxSize) return false;
-		this.close();
 	}
 	
 	void free(){ 
+    if(this.isEmpty) return;
 		this.head.freeCascade();	
 		this.head.unmarkCascade();
 	}
 		
 	dsNode get root => this.head;
+  	bool  get isEmpty => (this.head == null && this.tail == null);
 	dsListIterator get iterator => dsListIterator.create(this);
 }
