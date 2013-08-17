@@ -1,7 +1,7 @@
 part of ds.core;
 
 
-class dsNode<T> extends dsAbstractNode<T>{
+class dsNode<T> extends dsAbstractNode<T> implements Comparable{
 	dsNode<T> left;
 	dsNode<T> right;
 	
@@ -13,11 +13,6 @@ class dsNode<T> extends dsAbstractNode<T>{
 		this.data = d;
 		if(l != null) left = l;
 		if(r != null) right = r;
-	}
-	
-	// sets data to null
-	void free(){
-		this.data = null;
 	}
 	
 	// this sends a all nodes linked to this node to set their data to 
@@ -33,6 +28,8 @@ class dsNode<T> extends dsAbstractNode<T>{
 		if(this.left != null && this.left.marked) this.left.unmarkCascade();
 		if(this.right != null && this.right.marked) this.right.unmarkCascade();
 	}
+	
+
 }
 
 

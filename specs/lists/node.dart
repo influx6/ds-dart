@@ -1,6 +1,7 @@
 part of ds.specs;
 
 void nodeSpec(){
+
 	var node = ds.dsNode.create(2);		
 	var list = new ds.dsList();
 	var liss = ds.dsList.create();
@@ -18,8 +19,8 @@ void nodeSpec(){
 	liss.append(13);
 	liss.append(45);
 	liss.append(59);
+	liss.append(node);
 
-	
 	assert(li.has(1));
 	assert(li.has(2));
 	assert(li.has(4));
@@ -32,5 +33,6 @@ void nodeSpec(){
 	assert(!ls.has(2));
 	
 	assert(list.removeHead().data == 1);
-	assert(liss.removeTail().data == 59);
+	assert(liss.removeTail().data == node);
+	
 }

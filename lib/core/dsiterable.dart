@@ -29,6 +29,41 @@ class dsIterator extends dsAbstractIterator{
 
 }
 
+class dsListIterator extends dsIterator{
+	
+	static create(l){ return new dsListIterator(l); }
+	dsListIterator(dsAbstractList l): super(l);
+	
+	dsListIterator createIterator(dsAbstractList l){
+		return dsListIterator.create(l);
+	}
+	
+	dynamic remove(dynamic l,{all:false}){
+		var steps = dsListIterator.create(this.ds);
+		var res;
+		
+		while(steps.moveNext()){
+			if(steps.current != l) continue;
+			res = steps.currentNode;
+			var right = res.right;
+			var left = res.left;
+
+			if(right != null) left.right = right;
+			if(left != null) right.left = left;
+			if(steps.ds.head == res) steps.ds.head = right;
+			if(steps.ds.tail == res) steps.ds.tail = left;
+			
+			res.right = res.left = null;
+			if(all) res.free();
+			steps.ds.decCounter(); 
+			return res;
+			if(!all) break;
+		}
+		
+		steps.detonate();
+	}
+}
+
 class dsSkipIterator extends dsIterator{
 	dsIterator _it;
 	num _skipCount;
@@ -56,8 +91,12 @@ class dsSkipIterator extends dsIterator{
 }
 
 class dsSelectIterator extends dsIterator{
+	final dsList phantom = new dsList();
 	dsNode from;
 	
-	dsSelectIterator(d) : super(d);
+	dsSelectIterator(dsAbstractNode d): super(phantom){
+    this.from = d;
+    dsList.head = this.from;
+  }
 
 }
