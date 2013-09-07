@@ -3,7 +3,8 @@ part of ds.core;
 class dsIterator extends dsAbstractIterator{
 	
 	dsIterator(ds): super(ds);
-		
+	dsIterator.Shell(): super.Shell();
+
 	bool has(dynamic n){
 		var self = this.ds.iterator;
 		while(self.moveNext()){
@@ -94,9 +95,21 @@ class dsSelectIterator extends dsIterator{
 	final dsList phantom = new dsList();
 	dsNode from;
 	
-	dsSelectIterator(dsAbstractNode d): super(phantom){
+  static create(dsNode m) => new dsSelectIterator(m);
+
+	dsSelectIterator(dsNode d): super.Shell(){
     this.from = d;
-    dsList.head = this.from;
+    phantom.head = this.from;
+    this.ds = phantom;
+  }
+  
+  bool moveNext([n]){
+    if(this.from == null || this.from.data == null) return false;
+    return super.moveNext(n);
   }
 
+  bool movePrevious([n]){
+    if(this.from == null || this.from.data == null) return false;
+    return super.movePrevious(n);
+  }
 }

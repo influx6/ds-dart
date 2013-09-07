@@ -29,6 +29,69 @@ class dsDepthFirst extends dsGSearcher{
 
 }
 
+class dsLimitedDepthFirst extends dsDepthFirst{
+    num depth = -1;
+
+    static create(d) => new dsLimitedDepthFirst(d);
+
+    dsLimitedDepthFirst(d):super(d);
+    
+    void search(dsAbstractGraph g,[num depth,Function heuristic]){
+      this.depth = ((depth != null && depth != 0) ? depth : -1);
+      super.search(g,heuristic);
+    }
+
+    void processArcs(dsGraphArc a,[Function heuristic]){
+      if(this.depth == 0) return;
+      
+      if(this.depth != -1) this.depth -= 1;
+      super.processArcs(a,heuristic);
+    }
+}
+
+
+class dsLimitedBreadthFirst extends dsBreadthFirst{
+    num depth = -1;
+
+	static create(d) => new dsLimitedBreadthFirst(d);
+	
+	dsLimitedBreadthFirst(Function processor(dsGraphNode b,[dsGraphArc a])): super(processor);
+	
+	void search(dsAbstractGraph g,[num depth,Function heuristic]){
+		if(!this.isReady(g)) return;
+    this.depth = ((depth != null && depth != 0) ? depth : -1);
+
+		this.processArcs(dsGraphArc.create(g.root.data,null),heuristic);
+		g.clearMarks();
+		
+	}
+	
+	void processArcs(dsGraphArc a,[Function heuristic]){
+		if(a == null || a.node == null) return;
+    if(this.depth == 0){ this.depth = -1; return; }
+      
+		
+		var queue = new Queue();
+		queue.add(a);
+		queue.first.node.mark();
+		while(queue.isNotEmpty){
+      if(this.depth == 0) break;
+			this.processor(queue.first.node,queue.first);
+			var arc = queue.first.node.arcs.iterator;
+			while(arc.moveNext()){
+				if(!arc.current.node.marked){
+					queue.add(arc.current);
+					arc.current.node.mark();
+				}
+			}
+			queue.removeFirst();
+      this.depth -= 1;
+		}
+	}
+
+
+}
+
 class dsBreadthFirst extends dsGSearcher{
 
 	static create(d) => new dsBreadthFirst(d);
@@ -67,12 +130,13 @@ class dsBreadthFirst extends dsGSearcher{
 
 class dsGraph<T,M> extends dsAbstractGraph<T,M>{
     
-	dynamic git;
+    dynamic git;
 
     static create() => new dsGraph<T,M>();
+    
 
     dsGraph(): super(){
-	  this.nodes = new dsList<dsGNode<T,M>>();
+      this.nodes = new dsList<dsGNode<T,M>>();
       this.git = this.nodes.iterator;
     }
     
@@ -81,30 +145,30 @@ class dsGraph<T,M> extends dsAbstractGraph<T,M>{
       return this.nodes.append(dsGraphNode.create(data)).data;
     }
     
-    void bind(dsGraphNode from,dsGraphNode to,dynamic weight){
+    void bind(dsGraphNode<T,M> from,dsGraphNode<T,M> to,dynamic weight){
       from.addArc(to,weight);
       if(!this.git.has(from)) this.add(from);
       if(!this.git.has(to)) this.add(to);
     }
   
-    void unbind(from,to){
+    void unbind(dsGraphNode<T,M> from,dsGraphNode<T,M> to){
       from.removeArc(to);
       if(!this.git.has(from)) this.add(from);
       if(!this.git.has(to)) this.add(to);
     }
 
     
-    void eject(dsGraphNode to){
+    void eject(dsGraphNode<T,M> to){
       while(this.git.moveNext()){
         this.git.current.removeArc(to);
       }
     }
 	
-	void clearMarks(){
-		while(this.git.moveNext()){
-			this.git.current.unmark();
-		}
-	}
+    void clearMarks(){
+      while(this.git.moveNext()){
+        this.git.current.unmark();
+      }
+    }
     
     String toString(){
       var map = new StringBuffer();
@@ -112,9 +176,9 @@ class dsGraph<T,M> extends dsAbstractGraph<T,M>{
       while(this.git.moveNext()){
         map.write('<Edge:<');
         map.write(this.git.current.printArcs());
-		map.write('>>');
+        map.write('>>');
       }
-	  map.write('>');
+      map.write('>');
       return map.toString();
     }
 }
