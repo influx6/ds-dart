@@ -5,14 +5,26 @@ class dsList<T> extends dsAbstractList{
 	dsListIterator _it;
 	
 	static create([n]){
-		return new dsList(n);
+		if(n != null && n is List) return new dsList.from(n);
+    return new dsList();
 	}
 	
-	dsList([List data]){
-		if(data != null) data.forEach((n){ this.append(n); });
+  factory dsList.fromDS(dsList data){
+    return data.clone();
+  }
+
+  factory dsList.from(List data){
+    var newlist = new dsList();
+		data.forEach((n){ newlist.append(n); });
+    return newlist;
+  }
+
+	dsList(){
 		this._it = dsListIterator.create(this);
 	}
 	
+  dsNode add(T d) => this.append(d);
+
 	dsNode append(T d){
 		if(this.isEmpty){ 
       this.head = this.tail = dsNode.create(d); 
@@ -27,7 +39,7 @@ class dsList<T> extends dsAbstractList{
 		this.tail.right = this.head;
 		this.tail.left = tail;
 		
-		tail.right = this.tail;		
+		if(tail != null) tail.right = this.tail;		
 		this.head.left = this.tail;
 		
 		this.incCounter();
@@ -54,40 +66,70 @@ class dsList<T> extends dsAbstractList{
 	}
 	
 	dynamic removeHead(){
-    if(this.isEmpty) return;
-		var head = this.root;
-		var left = head.left;
-		var right = head.right;
-		
-		this.head = right;
-		this.head.left = left;
-		left.right = this.head;
-		
-		head.right = head.left = null;
+    if(this.isEmpty) return this.nullify();
+    
+	  if(this.head == this.tail){
+		  var cur = this.root;
+		  cur.nullLinks();
+		  this.nullify();
+		  return cur;
+	  }
+	  
+    var current = this.root;
+    var left = current.left;
+    var right = current.right;
+
+    if(left == null && right == null){
+      this.nullify();
+      return current;
+    }
+    
+    this.head = right;
+    this.head.left = left;
+    
+    if(left != null) left.right = this.head;
+
+    current.nullLinks();
+
 		this.decCounter();
-		return head;
+		return current;
 	}
 	
 	dynamic removeTail(){
-    if(this.isEmpty) return;
-		var tail = this.tail;
-		var left = tail.left;
-		var right = tail.right;
+    if(this.isEmpty) 
+      return this.nullify();
+
+	  if(this.tail == this.head){
+		  var cur = this.tail;
+		  cur.nullLinks();
+		  this.nullify();
+		  return cur;
+	  }
 		
-		this.tail = left;
-		this.tail.right = this.head;
-		left.right = this.tail;
-		
-		tail.right = tail.left = null;
+    var current = this.tail;
+    var left = current.left;
+    var right = current.right;
+
+    if(left == null && right == null){
+      this.nullify();
+      return current;
+    }
+    
+    this.tail = left;
+    this.tail.right = right;
+    
+    if(right != null) right.left = this.tail;
+
+		current.nullLinks();
 		
 		this.decCounter();
-		return tail;	
+		return current;	
 	}
 	
 	dynamic remove(T d){
     if(this.isEmpty) return;
-    var i = this._it.remove(T);
-	if(i != null) this.decCounter();
+    if(i != null) this.decCounter();
+    if(i != null) this.decCounter();
     return i;
 	}
 	
@@ -105,9 +147,26 @@ class dsList<T> extends dsAbstractList{
     if(this.isEmpty) return;
 		this.head.freeCascade();	
 		this.head.unmarkCascade();
+    this.head = this.tail = null;
 	}
-		
+
+  dsList clone(){
+    var cloned = new dsList();
+    var itr = this.iterator;
+    while(itr.moveNext()){
+      clone.append(itr.current);
+    }
+    return cloned;
+  }
+  
+  String toString(){
+    var buffer = new StringBuffer(),
+        it = this.iterator;
+    while(it.moveNext()) buffer.write(it.current);
+    return buffer.toString();
+  }
+
+  bool  get isEmpty => (this.head == null && this.tail == null);
 	dsNode get root => this.head;
-  	bool  get isEmpty => (this.head == null && this.tail == null);
 	dsListIterator get iterator => dsListIterator.create(this);
 }

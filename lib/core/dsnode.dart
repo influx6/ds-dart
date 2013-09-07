@@ -15,6 +15,10 @@ class dsNode<T> extends dsAbstractNode<T> implements Comparable{
 		if(r != null) right = r;
 	}
 	
+	void nullLinks(){
+		this.left = this.right = null;
+	}
+	
 	// this sends a all nodes linked to this node to set their data to 
 	//null by calling the nodes free() method internal
 	void freeCascade(){

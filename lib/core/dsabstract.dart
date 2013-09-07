@@ -65,6 +65,19 @@ abstract class dsAbstractNode<T> implements Comparable{
 	
 }
 
+abstract class dsAbstractList<T> extends DS implements Comparable{
+	dsAbstractNode<T> head;
+	dsAbstractNode<T> tail;
+	
+	num get size => bomb.counter; 
+	bool get isEmpty => (head == null && tail == null);
+	dsAbstractIterator get iterator;	
+	void nullify(){
+    this.head = this.tail = null;
+    this.bomb.detonate();
+  }
+}
+
 abstract class dsTreeNode<T> extends dsAbstractNode<T>{
 	dsTreeNode<T> left;
 	dsTreeNode<T> right;
@@ -142,15 +155,6 @@ abstract class dsAbstractGraph<T,M> extends DS implements Comparable{
 	}
 }
 		
-abstract class dsAbstractList<T> extends DS implements Comparable{
-	dsAbstractNode<T> head;
-	dsAbstractNode<T> tail;
-	
-	num get size => bomb.counter; 
-	bool get isEmpty => (head == null && tail == null);
-	dsAbstractIterator get iterator;	
-	
-}
 
 abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 	static const int _uninit = 0;
@@ -162,6 +166,11 @@ abstract class dsAbstractIterator implements dsIteratorImpl,dsIteratorHelpers{
 	DS ds;
 		
 	dsAbstractIterator(this.ds){ counter = new Counter(this); }
+  
+  //allows creation of a iterator without a constructor initialized list to iterator on
+  //allowing the list to be set later using the Iterator.ds = list; format
+	dsAbstractIterator.Shell(){ counter = new Counter(this); }
+
 	dsAbstractIterator createIterator(n);
 	
 	num get size{
