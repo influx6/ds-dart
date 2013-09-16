@@ -35,5 +35,4 @@ void nodeSpec(){
 	assert(list.removeHead().data == 1);
 	assert(liss.removeTail().data == node);
 	
-  print(list.toString());
 }

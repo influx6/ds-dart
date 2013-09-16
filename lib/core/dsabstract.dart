@@ -41,6 +41,12 @@ class DS implements dsImpl{
 	bool get isDs => true;
 }
 
+abstract class dsFilter{
+	void use(dsAbstractGraph g);
+	void filter(dynamic g);
+	Future filterAll(dynamic a);
+}
+
 abstract class dsAbstractNode<T> implements Comparable{
 	T data;
 	bool _mark = false;
@@ -87,18 +93,29 @@ abstract class dsTreeNode<T> extends dsAbstractNode<T>{
 abstract class dsGSearcher implements dsSearcher{
 	dsAbstractNode root;
 	Function processor;
+  bool _end = false;
 	
-	dsGSearcher(Function processor(dsGNode b,[dsGArc a])){
+	dsGSearcher(void processor(dsGNode b,[dsGArc a,dsGSearcher s])){
 		this.processor = processor;
 	}
 	
-	void search(dsAbstractGraph g,[Function heuristic]);
-	void processArcs(dsGraphArc a,[Function heuristic]);
+	void search(dsAbstractGraph g);
+	void processArcs(dsGraphArc a);
 	
 	bool isReady(dsAbstractGraph g){
 	 	if(g.nodes.isEmpty || g.root == null) return false;
 		return true;
 	}
+
+  void end(){
+    this._end = true;
+  }
+  
+  void reset(){
+     this._end = false;
+  }
+
+  bool get interop => !!this._end;
 }
 	
 abstract class dsGArc<N,T> implements Comparable{
@@ -153,6 +170,12 @@ abstract class dsAbstractGraph<T,M> extends DS implements Comparable{
 	dsAbstractNode get root{
 		return this.nodes.root;
 	}
+
+  dsGraphNode add();
+  void bind();
+  void unbind();
+  void eject();
+
 }
 		
 
