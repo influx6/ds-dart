@@ -8,12 +8,12 @@ class GraphFilter extends dsFilter{
   Completer _future;
   bool _all = false;
 
-  GraphFilter.depthFirst(Function processor){
+  GraphFilter.depthFirst(dsGraphNode processor(k,n,a)){
     this.searcher = new dsDepthFirst(this._filteringOneProcessor);
 	this.processor = processor;
   }
 
-  GraphFilter.breadthFirst(Function processor){
+  GraphFilter.breadthFirst(dsGraphNode processor(k,n,a)){
     this.searcher = new dsBreadthFirst(this._filteringOneProcessor);
 	this.processor = processor;
   }
