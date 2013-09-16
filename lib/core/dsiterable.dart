@@ -27,7 +27,25 @@ class dsIterator extends dsAbstractIterator{
 		if(matchCount == me.size) return true;
 		return false;
 	}
-
+	
+	dynamic get(dynamic n){
+		var self = this.ds.iterator;
+		while(self.moveNext()){
+			if(self.current != n) continue;
+			return n;
+			break;
+		}
+		return;
+	}
+	
+	List getAll(dynamic n){
+		var self = this.ds.iterator,res = new List();
+		while(self.moveNext()){
+			if(self.current != n) continue;
+			res.add(n);
+		}
+		return res;
+	}
 }
 
 class dsListIterator extends dsIterator{

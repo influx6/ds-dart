@@ -5,6 +5,6 @@ void skipSpec(){
 	var skip = ds.dsSkipIterator.create(list,4);
   var selector = ds.dsSelectIterator.create(list.root.right);
 
-  while(selector.moveNext()) print(selector.current);
+  while(selector.moveNext()) assert(selector.current != null);
   list.free();
 }
