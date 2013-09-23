@@ -15,7 +15,7 @@ class dsImpl {
 }
 
 class dsSearcher{
-	void process(DS g);
+	Future process(DS g);
 }
 
 class dsIteratorHelpers{
@@ -99,8 +99,8 @@ abstract class dsGSearcher implements dsSearcher{
 		this.processor = processor;
 	}
 	
-	void search(dsAbstractGraph g);
-	void processArcs(dsGraphArc a);
+	Future search(dsAbstractGraph g);
+	Future processArcs(dsGraphArc a);
 	
 	bool isReady(dsAbstractGraph g){
 	 	if(g.nodes.isEmpty || g.root == null) return false;
@@ -114,7 +114,7 @@ abstract class dsGSearcher implements dsSearcher{
   void reset(){
      this._end = false;
   }
-
+  
   bool get interop => !!this._end;
 }
 	

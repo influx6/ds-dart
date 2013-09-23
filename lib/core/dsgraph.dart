@@ -3,52 +3,58 @@ part of ds.core;
 class GraphFilter extends dsFilter{
   dsGSearcher searcher;
   Function processor;
-  dsGraph g;
+  dsGraph graph;
   dynamic _key;
   Completer _future;
   bool _all = false;
 
   GraphFilter.depthFirst(dsGraphNode processor(k,n,a)){
     this.searcher = new dsDepthFirst(this._filteringOneProcessor);
-	this.processor = processor;
+    this.processor = processor;
   }
 
   GraphFilter.breadthFirst(dsGraphNode processor(k,n,a)){
     this.searcher = new dsBreadthFirst(this._filteringOneProcessor);
-	this.processor = processor;
+    this.processor = processor;
   }
   
   GraphFilter use(dsGraph a){
-	  this.g = a;
+	  this.graph = a;
 	  return this;
   }
 	  
   Future filter(dynamic k){
 	 this._future = new Completer();
 	  this._key = k;
-	  this.searcher.search(this.g);
+	  this.searcher.search(this.graph).then((n){
+      if(!this._future.isCompleted);
+        //this._future.completeError(new Exception('Not Found'));
+    });
+    
 	  return this._future.future;
   }
   
   Future filterAll(dynamic k){
  	  this._future = new Completer();
-	  var it = this.g.nodes.iterator, res = new List();
+	  var it = this.graph.nodes.iterator, res = new List();
 	  while(it.moveNext()){
 		  if(it.current.data != k) continue;
 		  res.add(it.current);
 	  }
-	  this._future.complete(res);
+    (res.isEmpty && !this._future.isCompleted ? this._future.completeError(new Exception('Not Found!')) 
+     : this._future.complete(res));
 	  return this._future.future;
   }
   
   void _filteringOneProcessor(node,[arc,graph]){
   	  var n = this.processor(this._key,node,arc); 
-	  if(n != null){
-		  this._future.complete(n);
-		  graph.end();
-	  }
+      if(n != null){
+        this._future.complete(n);
+        graph.end();
+      }
   }
   
+  Future get finished => this._future.future;
 }
 
 class dsDepthFirst extends dsGSearcher{
@@ -57,16 +63,20 @@ class dsDepthFirst extends dsGSearcher{
 
 	dsDepthFirst(void processor(dsGraphNode b,[dsGraphArc a,dsGSearcher g])): super(processor);
 	
-	void search(dsAbstractGraph g){
-		if(!this.isReady(g)) return;
+	Future search(dsAbstractGraph g){
+		if(!this.isReady(g)) return new Future.value(null);
     	this.reset();
 				
-		this.processArcs(dsGraphArc.create(g.root.data,null));
+		var drained = this.processArcs(dsGraphArc.create(g.root.data,null),new Completer());
 		g.clearMarks();
+    return drained;
 	}
 	
-	void processArcs(dsGraphArc a){
-		if(a == null || a.node == null || this.interop) return;
+	Future processArcs(dsGraphArc a,Completer d){
+		if(a == null || a.node == null || this.interop){
+      if(!d.isCompleted) d.complete(null);
+      return d.future;
+    }
 		
 		var n = a.node;
 		this.processor(n,a,this);
@@ -74,8 +84,10 @@ class dsDepthFirst extends dsGSearcher{
 		var arc = n.arcs.iterator;
 		while(arc.moveNext()){
 			if(!arc.current.node.marked) 
-				this.processArcs(arc.current);
+				this.processArcs(arc.current,d);
 		}
+    if(!d.isCompleted) d.complete(null);
+    return d.future;
 	}
 
 
@@ -88,16 +100,19 @@ class dsLimitedDepthFirst extends dsDepthFirst{
 
     dsLimitedDepthFirst(d):super(d);
     
-    void search(dsAbstractGraph g,[num depth]){
+    Future search(dsAbstractGraph g,[num depth]){
       this.depth = ((depth != null && depth != 0) ? depth : -1);
-      super.search(g);
+      return super.search(g);
     }
 
-    void processArcs(dsGraphArc a){
-      if(this.depth == 0 && this.interop) return;
+    Future  processArcs(dsGraphArc a,Completer d){
+      if(this.depth == 0 || this.interop){
+        if(!d.isCompleted) d.complete(null);
+        return d.future;
+      }
       
       if(this.depth != -1) this.depth -= 1;
-      super.processArcs(a);
+      return super.processArcs(a,d);
     }
 }
 
@@ -109,17 +124,23 @@ class dsLimitedBreadthFirst extends dsBreadthFirst{
 	
     dsLimitedBreadthFirst(void processor(dsGraphNode b,[dsGraphArc a,dsGSearcher search])): super(processor);
     
-    void search(dsAbstractGraph g,[num depth]){
+    Future search(dsAbstractGraph g,[num depth]){
       if(!this.isReady(g)) return;
+    	this.reset();
       this.depth = ((depth != null && depth != 0) ? depth : -1);
 
-      this.processArcs(dsGraphArc.create(g.root.data,null));
+      var future = this.processArcs(dsGraphArc.create(g.root.data,null));
       g.clearMarks();
+      return future;
       
     }
     
-    void processArcs(dsGraphArc a){
-      if(a == null || a.node == null) return;
+    Future processArcs(dsGraphArc a){
+      var drained = new Completer();
+      if(a == null || a.node == null || this.interop){
+        drained.complete(null);
+        return drained.future;
+      }
       if(this.depth == 0){ this.depth = -1; return; }
       
       var queue = new Queue();
@@ -141,6 +162,8 @@ class dsLimitedBreadthFirst extends dsBreadthFirst{
         queue.removeFirst();
         this.depth -= 1;
       }
+      drained.complete(null);
+      return drained.future;
     }
 
 }
@@ -151,16 +174,22 @@ class dsBreadthFirst extends dsGSearcher{
 	
 	dsBreadthFirst(void processor(dsGraphNode b,[dsGraphArc a,dsGSearcher search])): super(processor);
 	
-	void search(dsAbstractGraph g){
+	Future search(dsAbstractGraph g){
 		if(!this.isReady(g)) return;
+    this.reset();
 				
-		this.processArcs(dsGraphArc.create(g.root.data,null));
+		var future = this.processArcs(dsGraphArc.create(g.root.data,null));
 		g.clearMarks();
+    return future;
 		
 	}
 	
-	void processArcs(dsGraphArc a){
-		if(a == null || a.node == null) return;
+	Future processArcs(dsGraphArc a){
+    var drained = new Completer();
+		if(a == null || a.node == null || this.interop){
+      drained.complete(null);
+      return drained.future;
+    }
 		
 		var queue = new Queue();
 		queue.add(a);
@@ -180,6 +209,8 @@ class dsBreadthFirst extends dsGSearcher{
 			}
 			queue.removeFirst();
 		}
+    drained.complete(null);
+    return drained.future;
 	}
 
 
@@ -196,15 +227,24 @@ class dsGraph<T,M> extends dsAbstractGraph<T,M>{
       this.nodes = new dsList<dsGNode<T,M>>();
       this.git = this.nodes.iterator;
     }
-    
-	dynamic find(dynamic data){
-		if(data is dsGraphNode) return this.git.get(data.data);
-		return this.git.get(data);
-	}
+	
+    dynamic findBy(Function n){
+      var it = this.nodes.iterator;
+      while(it.moveNext()){
+        if(n(it.current)) {
+          return it.current;
+          break;
+        }
+      }
+      return null;
+    }
+	
+    dynamic find(dynamic data){
+      if(data is dsGraphNode) return this.git.get(data.data);
+      return this.git.get(data);
+    }
 	
     dsGraphNode add(dynamic data){
-	  var n = this.find(data);
-	  if(n != null) return n;
       if(data is dsGraphNode) return this.nodes.append(data).data;
       return this.nodes.append(dsGraphNode.create(data)).data;
     }
@@ -245,6 +285,11 @@ class dsGraph<T,M> extends dsAbstractGraph<T,M>{
       map.write('>');
       return map.toString();
     }
+
+    dsGraphNode get first => this.nodes.root.data;
+    dsGraphNode get last => this.nodes.tail.data;
+    bool get isEmpty => this.nodes.isEmpty;
+    int get size => this.nodes.size;
 }
 
 class dsGraphArc<T> extends dsGArc<dsGraphNode,T>{

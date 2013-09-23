@@ -41,16 +41,39 @@ void searcher(){
 		if(n.data == 10) _.end();
 	});
   
-	df.search(graph);
+	df.search(graph).then((_){
+    print('df is done');
+  });
+
 	print('\n');
-	bf.search(graph);
-  	print('\n');
-  	ldf.search(graph,4);
-  	print('\n');
-  	lbf.search(graph,5);
-  	print('\n');	
-	b.search(graph);
-  	print('\n');	
+
+	bf.search(graph).then((_){
+    print('bf is done');
+  });
+
+  print('\n');
+  ldf.search(graph,2).then((_){
+    print('ldf is done');
+  });
+
+  print('\n');
+
+  lbf.search(graph,5).then((_){
+    print('lbf is done');
+  });
+
+  print('\n');	
+
+	b.search(graph).then((_){
+    print('b is ended');
+  });
+
+  print('\n');
+  ldf.search(graph,1).then((_){
+    print('ldf2 is done');
+  });
+
+  print('\n');	
 	
 	var gd = new ds.GraphFilter.depthFirst((key,n,a){
 		if(n.data == key) return n;
@@ -66,11 +89,18 @@ void searcher(){
 	gb.use(graph);
 	
 	gd.filter(2).then((n){
-		print('depthfirst::found node $n');
-	});
+    assert(n.data is int && n.data == 2);
+	}).catchError((e){
+    print('error $e');
+  });
 	
 	gb.filter(10).then((n){
-		print('breadthfirst::found node $n');
-	});
+    assert(n.data is int && n.data == 10);
+	}).catchError((e){
+    print('error $e');
+  });
 	
+	gd.filterAll(22).catchError((e){
+    assert(e is Exception);
+  });
 }
