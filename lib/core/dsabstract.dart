@@ -119,9 +119,9 @@ abstract class dsAbstractList<T> extends DS implements Comparable{
 	}
 	
 	void nullify(){
-    this.head = this.tail = null;
-    this.bomb.detonate();
-  }
+                this.head = this.tail = null;
+                this.bomb.detonate();
+        }
 	
 	bool isDense(){
 	    if(this.maxSize == null) return false;
