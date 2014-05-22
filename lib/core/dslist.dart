@@ -126,12 +126,19 @@ class dsList<T> extends dsAbstractList{
 	}
 	
 	void removeAll(){
-    if(this.isEmpty) return;
+          if(this.isEmpty) return;
 	  this.free();
 	  this.head = this.tail = null;
 	}
 
-
+        dynamic disjoin(){
+          var root = this.head;
+          var tail = this.tail;
+          this.tail = this.head = null;
+          var nl = new List<T>();
+          nl.head = root; nl.tail = tail;
+          return nl;
+        }
 	
 	void free(){ 
     if(this.isEmpty) return;
