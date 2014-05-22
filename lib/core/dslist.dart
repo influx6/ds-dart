@@ -135,7 +135,7 @@ class dsList<T> extends dsAbstractList{
           var root = this.head;
           var tail = this.tail;
           this.tail = this.head = null;
-          var nl = new ds.dsList<T>();
+          var nl = new dsList<T>();
           nl.head = root; nl.tail = tail;
           return nl;
         }
