@@ -135,7 +135,7 @@ class dsList<T> extends dsAbstractList{
           var root = this.head;
           var tail = this.tail;
           this.tail = this.head = null;
-          var nl = new List<T>();
+          var nl = new ds.dsList<T>();
           nl.head = root; nl.tail = tail;
           return nl;
         }
@@ -164,8 +164,10 @@ class dsList<T> extends dsAbstractList{
 	String toString(){
 	    var buffer = new StringBuffer(),
 	    it = this.iterator;
-	    buffer.write("List::Contents:");
-	    while(it.moveNext()) buffer.write(it.current);
+	    while(it.moveNext()){
+              buffer.write(it.current);
+              buffer.write('::');
+            }
 	    return buffer.toString();
 	}
 

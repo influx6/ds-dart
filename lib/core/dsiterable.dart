@@ -37,36 +37,36 @@ class dsIterator extends dsAbstractIterator{
 	}
 	
 	dynamic get(dynamic n,[bool m(h,j)]){
-      if(this.ds.isEmpty) return null;
-		var self = this.ds.iterator;
-		while(self.moveNext()){
-      if(m == null && self.current != n) continue;
-      if(m != null && !m(self,n)) continue;
-      if(m != null && !!m(self,n)) return self.currentNode;
-      return self.currenNode;
-			break;
-		}
-		return;
+          if(this.ds.isEmpty) return null;
+          var self = this.ds.iterator;
+          while(self.moveNext()){
+          if(m == null && self.current != n) continue;
+          if(m != null && !m(self,n)) continue;
+          if(m != null && !!m(self,n)) return self.currentNode;
+          return self.currenNode;
+                  break;
+          }
+          return;
 	}
 	
 	List getAll(dynamic n,[bool m(h,j)]){
-      if(this.ds.isEmpty) return [];
-		var self = this.ds.iterator,res = new List();
-		while(self.moveNext()){
-		  if(m == null && self.current != n) continue;
-		  if(m != null && !m(self,n)) continue;
-	      if(m != null && !!m(self,n)) res.add(self.currentNode);
-	      else res.add(self.currentNode);
-		}
-		return res;
+          if(this.ds.isEmpty) return [];
+          var self = this.ds.iterator,res = new List();
+          while(self.moveNext()){
+            if(m == null && self.current != n) continue;
+            if(m != null && !m(self,n)) continue;
+            if(m != null && !!m(self,n)) res.add(self.currentNode);
+            else res.add(self.currentNode);
+          }
+          return res;
 	}
 	
 
 	void cascade(Function n,[Function complete]){
-		if(this.ds.isEmpty) return;
-		var self = this.ds.iterator;
-		while(self.moveNext()) n(self);
-		if(complete != null) complete(self);
+          if(this.ds.isEmpty) return;
+          var self = this.ds.iterator;
+          while(self.moveNext()) n(self);
+          if(complete != null) complete(self);
 	}
 }
 
@@ -141,7 +141,7 @@ class dsSelectIterator extends dsIterator{
 	
   static create(dsNode m) => new dsSelectIterator(m);
 
-	dsSelectIterator(this.from): super.Shell(){
+  dsSelectIterator(this.from): super.Shell(){
     phantom.head = this.from;
     this.ds = phantom;
   }
